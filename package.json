@@ -1,0 +1,37 @@
+{
+  "name": "graduation-audit-helper",
+  "version": "0.1.0",
+  "description": "A tool to puppet chrome and help check graduation status on students.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "scrape": "node scraper/index.js",
+    "client": "node bundle.js",
+    "client:dev": "node bundle.js dev",
+    "client:devServer": "node bundle.js dev serve",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Seth Berrier",
+  "license": "MIT",
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "esbuild": "^0.24.0",
+    "eslint": "^8.57.1",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-n": "^16.6.2",
+    "eslint-plugin-promise": "^6.6.0",
+    "eslint-plugin-react": "^7.37.1",
+    "eslint-plugin-react-hooks": "^5.0.0"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
+    "@fontsource/roboto": "^5.1.0",
+    "@mui/icons-material": "^6.1.4",
+    "@mui/material": "^6.1.4",
+    "puppeteer": "^23.6.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  }
+}
