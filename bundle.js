@@ -1,4 +1,5 @@
 import esbuild from 'esbuild'
+import copyStaticFiles from 'esbuild-copy-static-files'
 
 // Look for server and dev modes
 let _DEV_ = process.argv.includes('dev')
@@ -27,7 +28,17 @@ async function doBuild () {
     loader: { '.woff': 'binary', '.woff2': 'binary' },
     minify: !_DEV_,
     sourcemap: _DEV_,
-    logLevel: 'info'
+    logLevel: 'info',
+    plugins: [
+      copyStaticFiles({
+        src: './output',
+        dest: './public/data',
+        dereference: true,
+        errorOnExist: false,
+        preserveTimestamps: true,
+        recursive: false
+      })
+    ]
   }
 
   if (_DEV_) {

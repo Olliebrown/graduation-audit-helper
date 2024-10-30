@@ -52,6 +52,7 @@ After cloning and installing dependencies with `npm install`, you must provide t
     ```
 - Edit `scraper/index.js` to change the path to the data file if necessary.
   - You may also want to edit the path of the output file
-  - We recommend placing them in `scraper/data` and/or `scraper/output` as the content of these folders are excluded from the repository.
+  - We recommend placing them in `scraper/data` and/or `output` as the content of these folders are excluded from the repository.
+  - Data in `output` will be automatically copied to `public/data` for viewing in the front-end.
 - Run the scraper with `npm run scrape`
 - After scraping, you can view the data by running `npm run client:devServer` and navigating to `localhost:3000` in your browser.

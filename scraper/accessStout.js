@@ -56,6 +56,105 @@ export async function navigateToStudentPage (page, campusId) {
   await page.waitForFunction(PAGE.STUDENT, { timeout: 30000 })
 }
 
+export async function getHolds (page) {
+  // Make sure we are on the right page
+  if (!await page.evaluate(PAGE.STUDENT)) {
+    throw new Error('Must be on student page before opening advising audit')
+  }
+
+  // Get main content frame
+  const frame = await getContentFrame(page)
+
+  // Grab and return all hold rows
+  return await frame.$$eval('tr[id*=SRVCIND_HOLD]',
+    rows => Array.from(rows).map(row => row.textContent.trim())
+  )
+}
+
+export async function getEnrollmentDates (page) {
+  // Make sure we are on the right page
+  if (!await page.evaluate(PAGE.STUDENT)) {
+    throw new Error('Must be on student page before opening advising audit')
+  }
+
+  let frame = await getContentFrame(page)
+
+  // Check if the 'more appointment' link is present
+  if (await frame.$('a[id*=MORE_APPT]') === null) {
+    return []
+  }
+
+  // Navigate to the enrollment dates page
+  await frame.locator('a[id*=MORE_APPT]').click()
+
+  // Wait for the page to load
+  await page.waitForFunction(PAGE.ENROLLMENT_DATES, { timeout: 30000 })
+
+  // Click the radio button for the latest date
+  frame = await getContentFrame(page)
+  const buttons = await frame.$$('input[type=radio]')
+  if (buttons.length > 0) {
+    // Click the button
+    await buttons[buttons.length - 1].click()
+
+    // Click the 'continue' button
+    await frame.locator('input[value="Continue"]').click()
+
+    // Wait for the enrollment table to open
+    frame = await getContentFrame(page)
+  }
+
+  // Grab the date
+  const row = await frame.waitForSelector('tr[id*=STDNT_ENRL]')
+  const date = await row.evaluate(rowE => rowE.cells[1].textContent.trim())
+
+  // Return to the student page
+  await frame.locator('input[id*=CANCEL_BTN]').click()
+  await page.waitForFunction(PAGE.STUDENT, { timeout: 30000 })
+
+  // Return back the date
+  return date
+}
+
+export async function getAdvisorInfo (page) {
+  // Make sure we are on the right page
+  if (!await page.evaluate(PAGE.STUDENT)) {
+    throw new Error('Must be on student page before opening advising audit')
+  }
+
+  let frame = await getContentFrame(page)
+
+  // Check if the 'advisors' link is present
+  if (await frame.$('a[id*=MORE_ADVISOR]') === null) {
+    return []
+  }
+
+  // Navigate to the advisor page
+  await frame.locator('a[id*=MORE_ADVISOR]').click()
+
+  // Wait for the page to load
+  await page.waitForFunction(PAGE.ADVISORS, { timeout: 30000 })
+
+  // Grab advisor names and emails
+  frame = await getContentFrame(page)
+  const advisors = await frame.$$eval('a[id*=ADVR_NAME]', links =>
+    Array.from(links).map(link => ({
+      name: link.textContent.trim(),
+      email: link.getAttribute('href').split(':')[1]
+    }))
+  )
+  const programs = await frame.$$eval('span[id*=ADVR_COMMITTEE]', spans => (
+    Array.from(spans).map(span => span.textContent.trim().split('(')[0])
+  ))
+
+  // Return to the student page
+  await frame.locator('input[id*=CANCEL_BTN]').click()
+  await page.waitForFunction(PAGE.STUDENT, { timeout: 30000 })
+
+  // Return back the advisor info
+  return advisors.map((advisor, i) => ({ ...advisor, program: programs[i] }))
+}
+
 export async function openAdvisingAudit (page) {
   // Make sure we are on the right page
   if (!await page.evaluate(PAGE.STUDENT)) {

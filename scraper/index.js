@@ -1,7 +1,7 @@
 import fs from 'fs'
 import puppeteer from 'puppeteer'
 
-import { getProgramsStatus, loginToAccessStout, navigateToStudentPage, openAdvisingAudit } from './accessStout.js'
+import * as AccessStout from './accessStout.js'
 
 const rawData = fs.readFileSync('./scraper/data/dec24Grads.json', { encoding: 'utf8' })
 const students = JSON.parse(rawData)
@@ -14,15 +14,25 @@ async function doTheThing () {
 
   try {
     // Navigate to access stout and log in
-    await loginToAccessStout(page)
+    await AccessStout.loginToAccessStout(page)
 
     for (let i = 0; i < students.length; i++) {
       // Navigate to a student page and open their advising audit
-      await navigateToStudentPage(page, students[i].campusId)
-      await openAdvisingAudit(page)
+      await AccessStout.navigateToStudentPage(page, students[i].campusId)
 
-      // Read and save program status
-      const status = await getProgramsStatus(page)
+      // Read all the student data
+      const holds = await AccessStout.getHolds(page)
+      const advisors = await AccessStout.getAdvisorInfo(page)
+      const enrollment = await AccessStout.getEnrollmentDates(page)
+
+      // Open the advising audit and get the programs status
+      await AccessStout.openAdvisingAudit(page)
+      const status = await AccessStout.getProgramsStatus(page)
+
+      // Save the data to the student object
+      students[i].holds = holds
+      students[i].advisors = advisors
+      students[i].enrollment = enrollment
       students[i].status = status
     }
 
@@ -32,7 +42,7 @@ async function doTheThing () {
     console.error(error)
   } finally {
     // Close the browser
-    await browser.close()
+    // await browser.close()
   }
 }
 
