@@ -74,14 +74,14 @@ export async function getHolds (page) {
 export async function getEnrollmentDates (page) {
   // Make sure we are on the right page
   if (!await page.evaluate(PAGE.STUDENT)) {
-    throw new Error('Must be on student page before opening advising audit')
+    throw new Error('Must be on student page before opening enrollment date')
   }
 
   let frame = await getContentFrame(page)
 
   // Check if the 'more appointment' link is present
   if (await frame.$('a[id*=MORE_APPT]') === null) {
-    return []
+    return ''
   }
 
   // Navigate to the enrollment dates page
@@ -105,8 +105,15 @@ export async function getEnrollmentDates (page) {
   }
 
   // Grab the date
-  const row = await frame.waitForSelector('tr[id*=STDNT_ENRL]')
-  const date = await row.evaluate(rowE => rowE.cells[1].textContent.trim())
+  let date = ''
+  try {
+    // Look for first row in the enrollment dates table
+    const row = await frame.waitForSelector('tr[id*=STDNT_ENRL]')
+    date = await row.evaluate(rowE => rowE.cells[1].textContent.trim())
+  } catch (e) {
+    // No enrollment date so grab open enrollment instead
+    date = frame.$eval('div[id*=OPEN_START]', div => div.textContent.trim())
+  }
 
   // Return to the student page
   await frame.locator('input[id*=CANCEL_BTN]').click()
