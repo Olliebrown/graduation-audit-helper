@@ -68,7 +68,7 @@ export function buildStudentGridRows (rawData) {
 
     // Flatten the data
     return {
-      campusId: row.campusId,
+      campusId: row.campusId ?? row.emplId,
       firstName: row.firstName,
       lastName: row.lastName,
       email: row.email,

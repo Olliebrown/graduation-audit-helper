@@ -5,9 +5,10 @@ import * as PAGE from './pageHelpers.js'
 dotenv.config()
 const USERNAME = process.env.USERNAME ?? 'badname'
 const PASSWORD = process.env.PASSWORD ?? 'badpass'
+const EMPL_ID = process.env.EMPL_ID ?? 'bademplid'
 
 const ROOT_URL = 'https://access.uwstout.edu/'
-const ADVISEE_URL = 'https://www.uwstout.sis.wisconsin.edu/psp/stoprd-fd/EMPLOYEE/SA/c/SSR_ADVISEE_OVRD.SSS_ADVISEE_LIST.GBL'
+const ADVISEE_URL = `https://www.uwstout.sis.wisconsin.edu/psp/stoprd-fd/EMPLOYEE/SA/c/SSR_ADVISEE_OVRD.SSS_ADVISEE_LIST.GBL?EMPLID=${EMPL_ID}&PAGE=SSS_ADVISEE_LIST&Page=SSS_ADVISEE_LIST&Action=U`
 
 async function getContentFrame (page) {
   const frame = await page.frames().find(f => f.name() === 'TargetContent')
@@ -38,19 +39,43 @@ export async function loginToAccessStout (page) {
   await page.waitForSelector('div[id*=logoswan]', { timeout: 60000 })
 }
 
-export async function navigateToStudentPage (page, campusId) {
+export async function navigateToStudentPage (page, campusId, emplId) {
+  if (!campusId && !emplId) {
+    throw new Error('Must provide either campus ID or employee ID')
+  }
+
   // Navigate the page to a URL and grab frame
-  await page.goto(ADVISEE_URL)
-  const frame = await getContentFrame(page)
+  if (page.url() === ADVISEE_URL) {
+    await page.reload()
+  } else {
+    await page.goto(ADVISEE_URL)
+  }
 
-  // Click the button for other students
-  await frame.waitForSelector('input[value="View data for other students"]')
-  await frame.locator('input[value="View data for other students"]').click()
+  // Fill in ID and submit search
+  let tryAgain = true
+  while (tryAgain) {
+    const frame = await getContentFrame(page)
 
-  // Fill in campus ID and submit
-  await frame.waitForSelector('input[id*=CAMPUS_ID]')
-  await frame.locator('input[id*=CAMPUS_ID]').fill(campusId)
-  await frame.locator('input[value="Search"]').click()
+    // Click the button for other students
+    await frame.waitForSelector('input[value="View data for other students"]', { timeout: 10000 })
+    await frame.locator('input[value="View data for other students"]').click()
+
+    try {
+      if (!campusId) {
+        await frame.waitForSelector('input[id*=SRCH_EMPLID]', { timeout: 10000 })
+        await frame.locator('input[id*=SRCH_EMPLID]').fill(emplId)
+      } else {
+        await frame.waitForSelector('input[id*=SRCH_CAMPUS_ID]', { timeout: 10000 })
+        await frame.locator('input[id*=SRCH_CAMPUS_ID]').fill(campusId)
+      }
+
+      await frame.locator('input[value="Search"]').click()
+      tryAgain = false
+    } catch (error) {
+      console.log('Failed to load, retrying ...')
+      await page.reload({ timeout: 30000 })
+    }
+  }
 
   // Wait for the student page to load
   await page.waitForFunction(PAGE.STUDENT, { timeout: 30000 })

@@ -1,4 +1,5 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 import { Tooltip } from '@mui/material'
 import { DataGrid, GridToolbar, useGridApiRef } from '@mui/x-data-grid'
@@ -52,7 +53,7 @@ function renderMultiStatus (params) {
 }
 
 const columns = [
-  { field: 'campusId', headerName: 'Campus ID' },
+  { field: 'campusId', headerName: 'ID' },
   { field: 'firstName', headerName: 'First Name' },
   { field: 'lastName', headerName: 'Last Name' },
   { field: 'email', headerName: 'Email' },
@@ -66,18 +67,19 @@ const columns = [
   { field: 'minorRequirements', display: 'flex', align: 'center', minWidth: 150, headerName: 'Minors', renderCell: renderMultiStatus }
 ]
 
-export default function StudentsTable () {
+export default function StudentsTable (props) {
+  const { dataFile } = props
   const apiRef = useGridApiRef()
 
   const [studentData, setStudentData] = React.useState([])
   React.useEffect(() => {
-    fetch('data/dec24Grads-status.json')
+    fetch(dataFile)
       .then(res => res.json())
       .then(rawData => {
         setStudentData(buildStudentGridRows(rawData))
         setTimeout(() => apiRef.current?.autosizeColumns(), 500)
       })
-  }, [apiRef])
+  }, [apiRef, dataFile])
 
   return (
     <DataGrid
@@ -91,4 +93,8 @@ export default function StudentsTable () {
       }}
     />
   )
+}
+
+StudentsTable.propTypes = {
+  dataFile: PropTypes.string.isRequired
 }

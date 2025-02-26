@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer'
 
 import * as AccessStout from './accessStout.js'
 
-const rawData = fs.readFileSync('./scraper/data/dec24Grads.json', { encoding: 'utf8' })
+const rawData = fs.readFileSync('./scraper/data/may25Grads.json', { encoding: 'utf8' })
 const students = JSON.parse(rawData)
 
 async function doTheThing () {
@@ -18,7 +18,7 @@ async function doTheThing () {
 
     for (let i = 0; i < students.length; i++) {
       // Navigate to a student page and open their advising audit
-      await AccessStout.navigateToStudentPage(page, students[i].campusId)
+      await AccessStout.navigateToStudentPage(page, students[i].campusId, students[i].emplId)
 
       // Read all the student data
       const holds = await AccessStout.getHolds(page)
@@ -37,7 +37,7 @@ async function doTheThing () {
     }
 
     // Write out results
-    fs.writeFileSync('./output/dec24Grads-status.json', JSON.stringify(students, null, 2))
+    fs.writeFileSync('./output/may25Grads-status.json', JSON.stringify(students, null, 2))
   } catch (error) {
     console.error(error)
   } finally {
