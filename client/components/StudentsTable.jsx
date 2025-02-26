@@ -9,6 +9,8 @@ import {
   Dangerous as XIcon
 } from '@mui/icons-material'
 
+import StudentInfo from './StudentInfo.jsx'
+
 import { buildStudentGridRows } from '../data/dataProcessing.js'
 import { studentStatusComparator } from './studentStatusHelpers.js'
 
@@ -71,27 +73,51 @@ export default function StudentsTable (props) {
   const { dataFile } = props
   const apiRef = useGridApiRef()
 
+  const [rawStudentData, setRawStudentData] = React.useState([])
   const [studentData, setStudentData] = React.useState([])
   React.useEffect(() => {
     fetch(dataFile)
       .then(res => res.json())
       .then(rawData => {
+        const studentDetails = {}
+        rawData.forEach(student => {
+          const id = student.campusId ?? student.emplId
+          studentDetails[id] = student
+        })
+        setRawStudentData(studentDetails)
         setStudentData(buildStudentGridRows(rawData))
         setTimeout(() => apiRef.current?.autosizeColumns(), 500)
       })
   }, [apiRef, dataFile])
 
+  const [showStudentDetails, setShowStudentDetails] = React.useState(false)
+  const [selectedStudent, setSelectedStudent] = React.useState(null)
+
+  const handleRowClick = (params) => {
+    setSelectedStudent(params.id)
+    setShowStudentDetails(true)
+  }
+
   return (
-    <DataGrid
-      apiRef={apiRef}
-      rows={studentData}
-      columns={columns}
-      getRowId={row => row.campusId}
-      slots={{ toolbar: GridToolbar }}
-      slotProps={{
-        toolbar: { showQuickFilter: true }
-      }}
-    />
+    <>
+      <DataGrid
+        apiRef={apiRef}
+        rows={studentData}
+        columns={columns}
+        getRowId={row => row.campusId}
+        slots={{ toolbar: GridToolbar }}
+        slotProps={{
+          toolbar: { showQuickFilter: true }
+        }}
+        onRowClick={handleRowClick}
+      />
+      {rawStudentData && rawStudentData[selectedStudent] &&
+        <StudentInfo
+          studentData={rawStudentData[selectedStudent]}
+          isOpen={showStudentDetails}
+          onClose={() => setShowStudentDetails(false)}
+        />}
+    </>
   )
 }
 
